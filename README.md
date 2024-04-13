@@ -1,0 +1,1 @@
+La diferencia con las ramas "main" y "develop_0.2" radica en que la función "werehouse_save" del módulo "storege.py" persiste en un motor de base de datos Posgres alojado en Aiven, creando previamente las tablas haciendo uso de Calses y completando los registros con bucles de instancia.
