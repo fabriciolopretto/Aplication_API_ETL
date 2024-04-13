@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>storage &mdash; Aplicacion_ETL 0.0.3 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/fonts.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=47de8214"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Aplicacion_ETL
+          </a>
+              <div class="version">
+                0.0.1
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../extraction.html">extraction module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../main.html">main module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../prosecution.html">prosecution module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../storage.html">storage module</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Aplicacion_ETL</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Module code</a></li>
+      <li class="breadcrumb-item active">storage</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for storage</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Este módulo define a las funciones que almacenan en el Data Lake</span>
+<span class="sd">los datos extraídos de la API.</span>
+<span class="sd">Se genera directorios para:</span>
+<span class="sd">1 - Para la metadata de la estación.</span>
+<span class="sd">2 - Para la extracción full de los datos de temperatura [ºC]</span>
+<span class="sd">    previos a la hora presente.</span>
+<span class="sd">3 - Para la extracción incremental de los datos de</span>
+<span class="sd">    temperatura [ºC] de la hora presente.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># Se importan las librerias necesarias</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sqlalchemy</span> <span class="k">as</span> <span class="nn">sa</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">create_engine</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy.sql</span> <span class="kn">import</span> <span class="n">text</span>
+<span class="kn">import</span> <span class="nn">configparser</span>
+<span class="kn">from</span> <span class="nn">pprint</span> <span class="kn">import</span> <span class="n">pprint</span>
+
+<div class="viewcode-block" id="almacena_full">
+<a class="viewcode-back" href="../storage.html#storage.almacena_full">[docs]</a>
+<span class="k">def</span> <span class="nf">almacena_full</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">,</span> <span class="n">aeropuerto</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Permite almacenar en Data Lake la metadata y datos extraídos de</span>
+<span class="sd">    forma full.</span>
+
+<span class="sd">    :param df: Indica el data frame con los datos.</span>
+<span class="sd">    :param layer: Capa del Data Lake.</span>
+<span class="sd">    :param endpoint: Indica el destino dentro del Data Lake.</span>
+<span class="sd">    :param aeropuerto: Indica el código OACI del aeropuerto.</span>
+
+<span class="sd">    :var ruta: Toma la ruta donde se encuentra el script.</span>
+<span class="sd">    :var landing: Describe ñla ruta donde se guarda el archivo parquet.</span>
+
+<span class="sd">    :type [df]: [pandas.core.frame.DataFrame]</span>
+<span class="sd">    :type [endpoint]: [string]</span>
+<span class="sd">    :type [aeropuerto]: [string]</span>
+<span class="sd">    :type [ruta]: [string]</span>
+<span class="sd">    :type [landing]: [string]</span>
+
+<span class="sd">    :return: [Metadatos o Datos Full de la estación seleccionada]</span>
+<span class="sd">    :rtype: [parquet]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">ruta</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">((</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)))</span>
+        <span class="n">landing</span> <span class="o">=</span> <span class="n">ruta</span><span class="o">+</span><span class="s1">&#39;/data_lake/&#39;</span><span class="o">+</span> <span class="n">layer</span> <span class="o">+</span><span class="s1">&#39;/aviationweather_api/&#39;</span><span class="o">+</span><span class="n">endpoint</span><span class="o">+</span><span class="s1">&#39;/&#39;</span><span class="o">+</span><span class="n">aeropuerto</span>
+
+        <span class="n">df</span><span class="o">.</span><span class="n">to_parquet</span><span class="p">(</span>
+            <span class="n">landing</span><span class="o">+</span><span class="s2">&quot;/data_parquet&quot;</span><span class="p">,</span>
+            <span class="n">engine</span><span class="o">=</span><span class="s2">&quot;fastparquet&quot;</span><span class="p">,</span>
+
+            <span class="n">partition_cols</span><span class="o">=</span><span class="kc">None</span>
+            <span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No se pudo guardar el archivo.&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="almacena_part">
+<a class="viewcode-back" href="../storage.html#storage.almacena_part">[docs]</a>
+<span class="k">def</span> <span class="nf">almacena_part</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">,</span> <span class="n">aeropuerto</span><span class="p">,</span> <span class="n">part</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Permite almacenar en Data Lake los datos de temperatura [ºC]</span>
+<span class="sd">    extraídos de forma incremental de forma horaria.</span>
+
+<span class="sd">    :param df: Indica el data frame con los datos.</span>
+<span class="sd">    :param layer: Capa del Data Lake.</span>
+<span class="sd">    :param endpoint: Indica el destino dentro del Data Lake.</span>
+<span class="sd">    :param aeropuerto: Indica el código OACI del aeropuerto.</span>
+
+<span class="sd">    :var ruta: Toma la ruta donde se encuentra el script.</span>
+<span class="sd">    :var landing: Describe la ruta donde se guarda el archivo parquet.</span>
+
+<span class="sd">    :type [df]: [pandas.core.frame.DataFrame]</span>
+<span class="sd">    :type [endpoint]: [string]</span>
+<span class="sd">    :type [aeropuerto]: [string]</span>
+<span class="sd">    :type [ruta]: [string]</span>
+<span class="sd">    :type [landing]: [string]</span>
+
+<span class="sd">    :return: [Metadatos o Datos Full de la estación seleccionada]</span>
+<span class="sd">    :rtype: [parquet]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">ruta</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">((</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)))</span>
+        <span class="n">landing</span> <span class="o">=</span> <span class="n">ruta</span><span class="o">+</span><span class="s1">&#39;/data_lake/&#39;</span> <span class="o">+</span> <span class="n">layer</span> <span class="o">+</span> <span class="s1">&#39;/aviationweather_api/&#39;</span><span class="o">+</span><span class="n">endpoint</span><span class="o">+</span><span class="s1">&#39;/&#39;</span><span class="o">+</span><span class="n">aeropuerto</span><span class="o">+</span><span class="s1">&#39;/&#39;</span><span class="o">+</span><span class="n">part</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">landing</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">landing</span><span class="p">)</span>
+
+        <span class="n">df</span><span class="o">.</span><span class="n">to_parquet</span><span class="p">(</span>
+            <span class="n">landing</span><span class="o">+</span><span class="s2">&quot;/data_parquet&quot;</span><span class="p">,</span>
+            <span class="n">engine</span><span class="o">=</span><span class="s2">&quot;fastparquet&quot;</span><span class="p">,</span>
+
+            <span class="n">partition_cols</span><span class="o">=</span><span class="kc">None</span>
+            <span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No se pudo guardar el archivo.&quot;</span><span class="p">)</span></div>
+
+    
+
+<div class="viewcode-block" id="particion">
+<a class="viewcode-back" href="../storage.html#storage.particion">[docs]</a>
+<span class="k">def</span> <span class="nf">particion</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Devuelve la fecha y hora de la partición.</span>
+
+<span class="sd">    :param df: Indica el data frame &quot;landing&quot; con los datos.</span>
+
+<span class="sd">    :return: [Cadena de caracteres con la fecha y hora de la partición]</span>
+<span class="sd">    :rtype: [str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span> 
+        <span class="n">particion</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">reportTime</span><span class="p">)</span>
+        <span class="n">particion</span> <span class="o">=</span> <span class="n">particion</span><span class="p">[</span><span class="mi">5</span><span class="p">:</span><span class="mi">15</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;-&#39;</span><span class="o">+</span><span class="n">particion</span><span class="p">[</span><span class="mi">16</span><span class="p">:</span><span class="mi">18</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;Z&#39;</span>
+
+        <span class="k">return</span> <span class="n">particion</span>
+    
+    <span class="k">except</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No se pudo generar el nombre de la partición.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="werehouse_save">
+<a class="viewcode-back" href="../storage.html#storage.werehouse_save">[docs]</a>
+<span class="k">def</span> <span class="nf">werehouse_save</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">df1</span><span class="p">,</span> <span class="n">df2</span><span class="p">,</span> <span class="n">df3</span><span class="p">,</span> <span class="n">df4</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Almacena en el Data Werehouse creado en el servicio de Aiven.</span>
+
+<span class="sd">    :param filename: Indica el DataFrame con los datos de la estación.</span>
+<span class="sd">    :param df1: Indica el DataFrame con los datos de la estación.</span>
+<span class="sd">    :param df2: Indica el DataFrame con los datos de temperatura horaria.</span>
+<span class="sd">    :param df3: Indica el DataFrame con los datos de temperatura máxima.</span>
+<span class="sd">    :param df4: Indica el DataFrame con los datos de temperatura mínima.</span>
+
+<span class="sd">    Se crean las Tablas en un Esquema &quot;público&quot;, y se persisten los datos</span>
+<span class="sd">    almacenados en los DataFrames en Tablas correspondientes. </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># Se define la ruta relativa al usuario</span>
+        <span class="n">ruta</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">((</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)))</span>
+        <span class="c1"># leer el archivo de configuración</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">configparser</span><span class="o">.</span><span class="n">ConfigParser</span><span class="p">()</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">ruta</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">filename</span><span class="p">)</span>
+
+        <span class="c1"># Leer la configuración de la sección &#39;database&#39;</span>
+        <span class="n">db_config</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;postgres&#39;</span><span class="p">]</span>
+
+        <span class="c1"># Obtener los valores de configuración</span>
+        <span class="n">host</span> <span class="o">=</span> <span class="n">db_config</span><span class="p">[</span><span class="s1">&#39;host&#39;</span><span class="p">]</span>
+        <span class="n">port</span> <span class="o">=</span> <span class="n">db_config</span><span class="p">[</span><span class="s1">&#39;port&#39;</span><span class="p">]</span>
+        <span class="n">database_name</span> <span class="o">=</span> <span class="n">db_config</span><span class="p">[</span><span class="s1">&#39;dbname&#39;</span><span class="p">]</span>
+        <span class="n">username</span> <span class="o">=</span> <span class="n">db_config</span><span class="p">[</span><span class="s1">&#39;user&#39;</span><span class="p">]</span>
+        <span class="n">password</span> <span class="o">=</span> <span class="n">db_config</span><span class="p">[</span><span class="s1">&#39;pwd&#39;</span><span class="p">]</span>
+
+        <span class="c1"># Configurar la conexión a la base de datos PostgreSQL en Aiven</span>
+        <span class="c1"># El formato de la URL de conexión es &#39;postgresql://usuario:contraseña@nombre_de_host:puerto/nombre_de_base_de_datos&#39;</span>
+        <span class="c1"># Asegurarse de reemplazar los valores con las credenciales</span>
+        <span class="n">conn_string</span> <span class="o">=</span> <span class="s1">&#39;postgresql://&#39;</span> <span class="o">+</span> <span class="n">username</span> <span class="o">+</span> <span class="s1">&#39;:&#39;</span> <span class="o">+</span> <span class="n">password</span> <span class="o">+</span> <span class="s1">&#39;@&#39;</span> <span class="o">+</span> <span class="n">host</span> <span class="o">+</span> <span class="s1">&#39;:&#39;</span> <span class="o">+</span> <span class="n">port</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">database_name</span>
+
+        <span class="c1"># Se crea y se establece la conexion con la base de datos</span>
+        <span class="n">engine</span> <span class="o">=</span> <span class="n">create_engine</span><span class="p">(</span><span class="n">conn_string</span><span class="p">)</span>
+        
+
+        <span class="c1"># Creación de Tablas</span>
+        <span class="c1"># Se decribe la consulta que crea la tabla de metadatos de las estacion</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">text</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        CREATE TABLE IF NOT EXISTS public.metadata_estaciones (</span>
+<span class="s2">            auto_id SERIAL PRIMARY KEY, -- ID autoincremental</span>
+<span class="s2">            ICAO TEXT,</span>
+<span class="s2">            Latitud REAL,</span>
+<span class="s2">            Longitud REAL,</span>
+<span class="s2">            MSNM INT,</span>
+<span class="s2">            País TEXT</span>
+<span class="s2">        );</span>
+<span class="s2">        &quot;&quot;&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Se ejecuta la consulta que crea la tabla de metadatos de la estacion</span>
+        <span class="k">with</span> <span class="n">engine</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">,</span> <span class="n">conn</span><span class="o">.</span><span class="n">begin</span><span class="p">():</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+        <span class="c1"># Se decribe la consulta que crea la tabla de datos horarios de temperatura</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">text</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        CREATE TABLE IF NOT EXISTS public.data_temperature (</span>
+<span class="s2">            auto_temp_id SERIAL PRIMARY KEY, -- ID autoincremental</span>
+<span class="s2">            Temperatura REAL,</span>
+<span class="s2">            Año INT,</span>
+<span class="s2">            Mes INT,</span>
+<span class="s2">            Día INT,</span>
+<span class="s2">            Hora INT,</span>
+<span class="s2">            Minuto INT</span>
+<span class="s2">        );</span>
+<span class="s2">        &quot;&quot;&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Se ejecuta la consulta que crea la tabla de datos horarios de temperatura</span>
+        <span class="k">with</span> <span class="n">engine</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">,</span> <span class="n">conn</span><span class="o">.</span><span class="n">begin</span><span class="p">():</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+        <span class="c1"># Se decribe la consulta que crea la tabla donde se registran los valores de temperatura máxima</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">text</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        CREATE TABLE IF NOT EXISTS public.max_temperature (</span>
+<span class="s2">            auto_max_id SERIAL PRIMARY KEY, -- ID autoincremental</span>
+<span class="s2">            Máxima REAL,</span>
+<span class="s2">            Año INT,</span>
+<span class="s2">            Mes INT,</span>
+<span class="s2">            Día INT,</span>
+<span class="s2">            Hora INT,</span>
+<span class="s2">            Minuto INT</span>
+<span class="s2">        );</span>
+<span class="s2">        &quot;&quot;&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Se ejecuta la consulta que crea la tabla donde se registran los valores de temperatura maxima</span>
+        <span class="k">with</span> <span class="n">engine</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">,</span> <span class="n">conn</span><span class="o">.</span><span class="n">begin</span><span class="p">():</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+        <span class="c1"># Se decribe la consulta que crea la tabla donde se registran los valores de temperatura minima</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">text</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        CREATE TABLE IF NOT EXISTS public.min_temperature (</span>
+<span class="s2">            auto_min_id SERIAL PRIMARY KEY, -- ID autoincremental</span>
+<span class="s2">            Mínima REAL,</span>
+<span class="s2">            Año INT,</span>
+<span class="s2">            Mes INT,</span>
+<span class="s2">            Día INT,</span>
+<span class="s2">            Hora INT,</span>
+<span class="s2">            Minuto INT</span>
+<span class="s2">        );</span>
+<span class="s2">        &quot;&quot;&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Se ejecuta la consulta que crea la tabla donde se registran los valores de temperatura máxima</span>
+        <span class="k">with</span> <span class="n">engine</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">,</span> <span class="n">conn</span><span class="o">.</span><span class="n">begin</span><span class="p">():</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+        <span class="c1"># Insertado sobre las Tablas</span>
+        <span class="c1"># Metadatos de la estacion</span>
+        <span class="k">with</span> <span class="n">engine</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">connection</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df1</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+                <span class="c1"># Consultar si el registro ya existe en la tabla</span>
+                <span class="n">consulta</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;SELECT COUNT(*) FROM public.metadata_estaciones WHERE ICAO = &#39;</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;ICAO&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+                <span class="n">query</span> <span class="o">=</span> <span class="n">text</span><span class="p">(</span><span class="n">consulta</span><span class="p">)</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span><span class="o">.</span><span class="n">scalar</span><span class="p">()</span>
+                
+                <span class="c1"># Si el registro no existe, insertarlo en la tabla</span>
+                <span class="k">if</span> <span class="n">result</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">insert_consulta</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;INSERT INTO public.metadata_estaciones (ICAO, Latitud, Longitud, MSNM, País) VALUES (&#39;</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;ICAO&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;, </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Latitud&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Longitud&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;MSNM&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, &#39;</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;País&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;)&quot;</span>
+                    <span class="n">insert_query</span> <span class="o">=</span> <span class="n">text</span><span class="p">(</span><span class="n">insert_consulta</span><span class="p">)</span>
+                    <span class="k">with</span> <span class="n">engine</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">,</span> <span class="n">conn</span><span class="o">.</span><span class="n">begin</span><span class="p">():</span>
+                        <span class="n">result</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">insert_query</span><span class="p">)</span>
+
+        <span class="c1"># Datos horarios de temperatura</span>
+        <span class="k">with</span> <span class="n">engine</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">connection</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df2</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+                <span class="c1"># Consultar si el registro ya existe en la tabla</span>
+                <span class="n">consulta</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;SELECT COUNT(*) FROM public.data_temperature WHERE Año = </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Año&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> AND Mes = </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Mes&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> AND Día = </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Día&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> AND Hora = </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Hora&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> AND Minuto = </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Minuto&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="n">query</span> <span class="o">=</span> <span class="n">text</span><span class="p">(</span><span class="n">consulta</span><span class="p">)</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span><span class="o">.</span><span class="n">scalar</span><span class="p">()</span>
+                
+                <span class="c1"># Si el registro no existe, insertarlo en la tabla</span>
+                <span class="k">if</span> <span class="n">result</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">insert_consulta</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;INSERT INTO public.data_temperature (Temperatura, Año, Mes, Día, Hora, Minuto) VALUES (</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Temperatura&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Año&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Mes&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Día&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Hora&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Minuto&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">)&quot;</span>
+                    <span class="n">insert_query</span> <span class="o">=</span> <span class="n">text</span><span class="p">(</span><span class="n">insert_consulta</span><span class="p">)</span>
+                    <span class="k">with</span> <span class="n">engine</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">,</span> <span class="n">conn</span><span class="o">.</span><span class="n">begin</span><span class="p">():</span>
+                        <span class="n">result</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">insert_query</span><span class="p">)</span>
+
+        <span class="c1"># Datos de temperatura maxima</span>
+        <span class="k">with</span> <span class="n">engine</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">connection</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df3</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+                <span class="c1"># Consultar si el registro ya existe en la tabla</span>
+                <span class="n">consulta</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;SELECT COUNT(*) FROM public.max_temperature WHERE Año = </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Año&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> AND Mes = </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Mes&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> AND Día = </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Día&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> AND Hora = </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Hora&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> AND Minuto = </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Minuto&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="n">query</span> <span class="o">=</span> <span class="n">text</span><span class="p">(</span><span class="n">consulta</span><span class="p">)</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span><span class="o">.</span><span class="n">scalar</span><span class="p">()</span>
+                
+                <span class="c1"># Si el registro no existe, insertarlo en la tabla</span>
+                <span class="k">if</span> <span class="n">result</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">insert_consulta</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;INSERT INTO public.max_temperature (Máxima, Año, Mes, Día, Hora, Minuto) VALUES (</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Máxima&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Año&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Mes&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Día&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Hora&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Minuto&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">)&quot;</span>
+                    <span class="n">insert_query</span> <span class="o">=</span> <span class="n">text</span><span class="p">(</span><span class="n">insert_consulta</span><span class="p">)</span>
+                    <span class="k">with</span> <span class="n">engine</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">,</span> <span class="n">conn</span><span class="o">.</span><span class="n">begin</span><span class="p">():</span>
+                        <span class="n">result</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">insert_query</span><span class="p">)</span>
+
+        <span class="c1"># Datos de temperatura minima</span>
+        <span class="k">with</span> <span class="n">engine</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">connection</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df4</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+                <span class="c1"># Consultar si el registro ya existe en la tabla</span>
+                <span class="n">consulta</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;SELECT COUNT(*) FROM public.min_temperature WHERE Año = </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Año&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> AND Mes = </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Mes&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> AND Día = </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Día&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> AND Hora = </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Hora&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> AND Minuto = </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Minuto&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="n">query</span> <span class="o">=</span> <span class="n">text</span><span class="p">(</span><span class="n">consulta</span><span class="p">)</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span><span class="o">.</span><span class="n">scalar</span><span class="p">()</span>
+                
+                <span class="c1"># Si el registro no existe, insertarlo en la tabla</span>
+                <span class="k">if</span> <span class="n">result</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">insert_consulta</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;INSERT INTO public.min_temperature (Mínima, Año, Mes, Día, Hora, Minuto) VALUES (</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Mínima&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Año&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Mes&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Día&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Hora&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;Minuto&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">)&quot;</span>
+                    <span class="n">insert_query</span> <span class="o">=</span> <span class="n">text</span><span class="p">(</span><span class="n">insert_consulta</span><span class="p">)</span>
+                    <span class="k">with</span> <span class="n">engine</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">,</span> <span class="n">conn</span><span class="o">.</span><span class="n">begin</span><span class="p">():</span>
+                        <span class="n">result</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">insert_query</span><span class="p">)</span>
+
+    <span class="k">except</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;No fue posible persistir el/los DataFrames en la Base de Datos de Aiven.&#39;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="werehouse_read">
+<a class="viewcode-back" href="../storage.html#storage.werehouse_read">[docs]</a>
+<span class="k">def</span> <span class="nf">werehouse_read</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">tabla</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Lee los datos almacenados en el Data Werehouse</span>
+<span class="sd">    creado en el servicio de Aiven.</span>
+
+<span class="sd">    :param filename: Indica el DataFrame con los datos de la estación.</span>
+<span class="sd">    :param tabla: Indica la Tabla del Data Werehouse en Aiven que se va a leer.</span>
+
+<span class="sd">    :return: [Metadatos o Datos de la estación seleccionada]</span>
+<span class="sd">    :rtype: [pandas.core.frame.DataFrame]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+
+        <span class="c1"># Se define la ruta relativa al usuario</span>
+        <span class="n">ruta</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">((</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)))</span>
+        <span class="c1"># leer el archivo de configuración</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">configparser</span><span class="o">.</span><span class="n">ConfigParser</span><span class="p">()</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">ruta</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">filename</span><span class="p">)</span>
+
+        <span class="c1"># Leer la configuración de la sección &#39;database&#39;</span>
+        <span class="n">db_config</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;postgres&#39;</span><span class="p">]</span>
+
+        <span class="c1"># Obtener los valores de configuración</span>
+        <span class="n">host</span> <span class="o">=</span> <span class="n">db_config</span><span class="p">[</span><span class="s1">&#39;host&#39;</span><span class="p">]</span>
+        <span class="n">port</span> <span class="o">=</span> <span class="n">db_config</span><span class="p">[</span><span class="s1">&#39;port&#39;</span><span class="p">]</span>
+        <span class="n">database_name</span> <span class="o">=</span> <span class="n">db_config</span><span class="p">[</span><span class="s1">&#39;dbname&#39;</span><span class="p">]</span>
+        <span class="n">username</span> <span class="o">=</span> <span class="n">db_config</span><span class="p">[</span><span class="s1">&#39;user&#39;</span><span class="p">]</span>
+        <span class="n">password</span> <span class="o">=</span> <span class="n">db_config</span><span class="p">[</span><span class="s1">&#39;pwd&#39;</span><span class="p">]</span>
+
+        <span class="c1"># Configurar la conexión a la base de datos PostgreSQL en Aiven</span>
+        <span class="c1"># El formato de la URL de conexión es &#39;postgresql://usuario:contraseña@nombre_de_host:puerto/nombre_de_base_de_datos&#39;</span>
+        <span class="c1"># Asegurarse de reemplazar los valores con las credenciales</span>
+        <span class="n">database_url</span> <span class="o">=</span> <span class="s1">&#39;postgresql://&#39;</span> <span class="o">+</span> <span class="n">username</span> <span class="o">+</span> <span class="s1">&#39;:&#39;</span> <span class="o">+</span> <span class="n">password</span> <span class="o">+</span> <span class="s1">&#39;@&#39;</span> <span class="o">+</span> <span class="n">host</span> <span class="o">+</span> <span class="s1">&#39;:&#39;</span> <span class="o">+</span> <span class="n">port</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">database_name</span>
+
+        <span class="c1"># Consulta SQL para seleccionar datos</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="s1">&#39;SELECT * FROM &#39;</span> <span class="o">+</span> <span class="n">tabla</span>
+
+        <span class="c1"># Crear el motor de SQLAlchemy</span>
+        <span class="n">engine</span> <span class="o">=</span> <span class="n">create_engine</span><span class="p">(</span><span class="n">database_url</span><span class="p">)</span>
+
+        <span class="c1"># Ejecutar la consulta SQL y cargar los resultados en un DataFrame</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_sql</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">engine</span><span class="p">)</span>
+
+        <span class="c1"># Mostrar el DataFrame a modo de prueba</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+    
+    <span class="k">except</span><span class="p">:</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;No fue posible conectar con la Base de Datos.&#39;</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Fabricio Lopretto.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

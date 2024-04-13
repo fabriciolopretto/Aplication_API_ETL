@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bienvenidos a la documentación de la Aplicación de Aviation Weather ETL! &mdash; Aplicacion_ETL 0.0.3 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+      <link rel="stylesheet" href="_static/fonts.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=47de8214"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="extraction module" href="extraction.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#" class="icon icon-home">
+            Aplicacion_ETL
+          </a>
+              <div class="version">
+                0.0.1
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="extraction.html">extraction module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="main.html">main module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="prosecution.html">prosecution module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="storage.html">storage module</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">Aplicacion_ETL</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Bienvenidos a la documentación de la Aplicación de Aviation Weather ETL!</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="bienvenidos-a-la-documentacion-de-la-aplicacion-de-aviation-weather-etl">
+<h1>Bienvenidos a la documentación de la Aplicación de Aviation Weather ETL!<a class="headerlink" href="#bienvenidos-a-la-documentacion-de-la-aplicacion-de-aviation-weather-etl" title="Link to this heading"></a></h1>
+<p>Realiza la extracción de datos horarios de Temperatura de la estación
+meteorológica del aeródromo de Ezeiza, para luego refinarlos y persistirlos
+en un <em>Data Lake</em> en formato parquet y en un <em>Data Werehouse</em> en Aiven con
+un motor de base de datos Postgres.</p>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="extraction.html">extraction module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="extraction.html#extraction.data_full"><code class="docutils literal notranslate"><span class="pre">data_full()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="extraction.html#extraction.data_incremental"><code class="docutils literal notranslate"><span class="pre">data_incremental()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="extraction.html#extraction.station_data"><code class="docutils literal notranslate"><span class="pre">station_data()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="main.html">main module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="prosecution.html">prosecution module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="prosecution.html#prosecution.concatenacion"><code class="docutils literal notranslate"><span class="pre">concatenacion()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="prosecution.html#prosecution.duplicados"><code class="docutils literal notranslate"><span class="pre">duplicados()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="prosecution.html#prosecution.elimnar_reportes_nulos"><code class="docutils literal notranslate"><span class="pre">elimnar_reportes_nulos()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="prosecution.html#prosecution.formato_datos"><code class="docutils literal notranslate"><span class="pre">formato_datos()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="prosecution.html#prosecution.formato_metadatos"><code class="docutils literal notranslate"><span class="pre">formato_metadatos()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="prosecution.html#prosecution.imputacion_datos_nulos"><code class="docutils literal notranslate"><span class="pre">imputacion_datos_nulos()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="prosecution.html#prosecution.imputacion_metadatos_nulos"><code class="docutils literal notranslate"><span class="pre">imputacion_metadatos_nulos()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="prosecution.html#prosecution.maxima"><code class="docutils literal notranslate"><span class="pre">maxima()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="prosecution.html#prosecution.minima"><code class="docutils literal notranslate"><span class="pre">minima()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="prosecution.html#prosecution.modificar_campos"><code class="docutils literal notranslate"><span class="pre">modificar_campos()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="prosecution.html#prosecution.separador_campo_time"><code class="docutils literal notranslate"><span class="pre">separador_campo_time()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="storage.html">storage module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="storage.html#storage.almacena_full"><code class="docutils literal notranslate"><span class="pre">almacena_full()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="storage.html#storage.almacena_part"><code class="docutils literal notranslate"><span class="pre">almacena_part()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="storage.html#storage.particion"><code class="docutils literal notranslate"><span class="pre">particion()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="storage.html#storage.werehouse_read"><code class="docutils literal notranslate"><span class="pre">werehouse_read()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="storage.html#storage.werehouse_save"><code class="docutils literal notranslate"><span class="pre">werehouse_save()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading"></a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="extraction.html" class="btn btn-neutral float-right" title="extraction module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Fabricio Lopretto.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
