@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>prosecution &mdash; documentación de Aplicacion_ETL - 0.0.2</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/fonts.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=58349a41"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../_static/translations.js?v=efdbd0b9"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Aplicacion_ETL
+          </a>
+              <div class="version">
+                0.0.1
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../extraction.html">extraction module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../main.html">main module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../prosecution.html">prosecution module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../storage.html">storage module</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Aplicacion_ETL</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Código de módulo</a></li>
+      <li class="breadcrumb-item active">prosecution</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Código fuente para prosecution</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Este módulo define a las funciones que realizan en el procesamiento</span>
+<span class="sd">los datos extraídos de la API. Las tareas realizadas son:</span>
+<span class="sd">1 - Elimina los registros duplicados.</span>
+<span class="sd">2 - Elimina registros de datos que no tienen fecha/hora resgitrada.</span>
+<span class="sd">3 - Completa con &quot;NaN&quot; los datos faltantes del campo indicado</span>
+<span class="sd">4 - Se para el campo de tiempo en año/mes/día/hora/minutos</span>
+<span class="sd">5 - Modifica el tipo de datos para optimizar en memoria.</span>
+<span class="sd">6 - </span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># Se importan las librerias necesarias</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+
+<span class="c1"># Eliminación de registros duplicados</span>
+<div class="viewcode-block" id="duplicados">
+<a class="viewcode-back" href="../prosecution.html#prosecution.duplicados">[documentos]</a>
+<span class="k">def</span> <span class="nf">duplicados</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Elimina los registros duplicados en los datos almacenados</span>
+<span class="sd">    en los archivos parquet alojados en la capa &quot;Landing&quot; del Data Lake.</span>
+
+<span class="sd">    :param df: Indica el data frame con los datos.</span>
+
+<span class="sd">    :type [df]: [pandas.core.frame.DataFrame]</span>
+
+<span class="sd">    :return: [Metadatos o Datos de la estación seleccionada]</span>
+<span class="sd">    :rtype: [pandas.core.frame.DataFrame]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">df_sin_duplicados</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">df_sin_duplicados</span>
+    
+    <span class="k">except</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No se pudo realizar eliminar los registros duplicados.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>        </div>
+
+
+
+<div class="viewcode-block" id="elimnar_reportes_nulos">
+<a class="viewcode-back" href="../prosecution.html#prosecution.elimnar_reportes_nulos">[documentos]</a>
+<span class="k">def</span> <span class="nf">elimnar_reportes_nulos</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">campo</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Elimina los registros sin identificador de fecha y hora en los datos</span>
+<span class="sd">    almacenados en los archivos parquet, alojados en la capa &quot;Landing&quot;</span>
+<span class="sd">    del Data Lake.</span>
+
+<span class="sd">    :param df: Indica el data frame con los datos.</span>
+<span class="sd">    :param campo: Indica el campo en el que se detectan faltantes.</span>
+
+<span class="sd">    :type [df]: [pandas.core.frame.DataFrame]</span>
+
+<span class="sd">    :return: [Meta. o Datos de la estación seleccionada]</span>
+<span class="sd">    :rtype: [pandas.core.frame.DataFrame]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">df_sin_fecha_y_hora</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="n">campo</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">df_sin_fecha_y_hora</span>
+    
+    <span class="k">except</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No se pudo eliminar registros sin fecha y hora.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>        </div>
+
+
+
+<div class="viewcode-block" id="imputacion_metadatos_nulos">
+<a class="viewcode-back" href="../prosecution.html#prosecution.imputacion_metadatos_nulos">[documentos]</a>
+<span class="k">def</span> <span class="nf">imputacion_metadatos_nulos</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Asigna valores por defecto a los registros almacenados</span>
+<span class="sd">    en el archivo parquet (alojados en la capa &quot;Landing&quot;</span>
+<span class="sd">    del Data Lake).</span>
+
+<span class="sd">    :param df: Indica el data frame con los datos.</span>
+
+<span class="sd">    :type [df]: [pandas.core.frame.DataFrame]</span>
+
+<span class="sd">    :return: [Datos de la estación seleccionada]</span>
+<span class="sd">    :rtype: [pandas.core.frame.DataFrame]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">imputation_mapping</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;icaoId&#39;</span><span class="p">:</span> <span class="s2">&quot;Sin Dato&quot;</span><span class="p">,</span>
+        <span class="s1">&#39;lat&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+        <span class="s1">&#39;lon&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+        <span class="s1">&#39;elev&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+        <span class="s1">&#39;country&#39;</span><span class="p">:</span> <span class="s2">&quot;Sin Dato&quot;</span>
+        <span class="p">}</span>
+
+        <span class="n">df_impugnado</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">imputation_mapping</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">df_impugnado</span>
+
+    <span class="k">except</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No se pudo asignar valores por defecto a los faltantes.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>        </div>
+
+
+
+<div class="viewcode-block" id="imputacion_datos_nulos">
+<a class="viewcode-back" href="../prosecution.html#prosecution.imputacion_datos_nulos">[documentos]</a>
+<span class="k">def</span> <span class="nf">imputacion_datos_nulos</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">campo</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Asigna a los registros almacenados en los archivos parquet (alojados</span>
+<span class="sd">    en la capa &quot;Landing&quot; del Data Lake) con valores de temperatura nulos</span>
+<span class="sd">    el valor por defecto &quot;NaN&quot; .</span>
+
+<span class="sd">    :param df: Indica el data frame con los datos.</span>
+<span class="sd">    :param campo: Indica el campo (Temp.) en el que se detectan faltantes.</span>
+
+<span class="sd">    :type [df]: [pandas.core.frame.DataFrame]</span>
+
+<span class="sd">    :return: [Datos de la estación seleccionada]</span>
+<span class="sd">    :rtype: [pandas.core.frame.DataFrame]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">imputation_mapping</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">campo</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="p">}</span>
+
+        <span class="n">df_impugnado</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">imputation_mapping</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">df_impugnado</span>
+
+    <span class="k">except</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No se pudo asignar valores por defecto a los faltantes.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>        </div>
+
+
+
+<div class="viewcode-block" id="separador_campo_time">
+<a class="viewcode-back" href="../prosecution.html#prosecution.separador_campo_time">[documentos]</a>
+<span class="k">def</span> <span class="nf">separador_campo_time</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">campo</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A los valores de fecha/hora almacenados en los archivos parquet</span>
+<span class="sd">    (alojados en la capa &quot;Landing&quot; del Data Lake) los separa en campos</span>
+<span class="sd">    de: año, mes, día, hora y minutos. Además, elimina el campo original.</span>
+
+<span class="sd">    :param df: Indica el data frame con los datos.</span>
+<span class="sd">    :param campo: Indica el campo (Temp.) en el que se detectan faltantes.</span>
+
+<span class="sd">    :type [df]: [pandas.core.frame.DataFrame]</span>
+
+<span class="sd">    :return: [Datos de la estación seleccionada]</span>
+<span class="sd">    :rtype: [pandas.core.frame.DataFrame]    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>    
+        <span class="c1"># Se paramos los elementos por los caracteres &quot;:&quot;,&quot; &quot; y &quot;-&quot; </span>
+        <span class="n">df</span><span class="p">[</span><span class="n">campo</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">campo</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;[: \-]&#39;</span><span class="p">)</span>
+        <span class="c1"># Asignamos los valores separados a nuevos campos</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">&quot;anno&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">campo</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">&quot;mes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">campo</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">&quot;dia&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">campo</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">&quot;hora&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">campo</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">&quot;minuto&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">campo</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+
+        <span class="c1"># Descartamos el campo original</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">campo</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">df</span>
+
+    <span class="k">except</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No se pudo separar el reporte de fecha y hora.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>        </div>
+
+
+
+<div class="viewcode-block" id="formato_datos">
+<a class="viewcode-back" href="../prosecution.html#prosecution.formato_datos">[documentos]</a>
+<span class="k">def</span> <span class="nf">formato_datos</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Modifica el tipo de dato de los Datos almacenados</span>
+<span class="sd">    en los archivos parquet alojados en el Data Lake.</span>
+<span class="sd">    Asigna el tipo de dato que mejor se ajusta, para</span>
+<span class="sd">    minimizar el espacio en memoria.</span>
+
+<span class="sd">    :param df: Indica el data frame con los datos.</span>
+
+<span class="sd">    :type [df]: [pandas.core.frame.DataFrame]</span>
+
+<span class="sd">    :return: [Datos de la estación seleccionada]</span>
+<span class="sd">    :rtype: [pandas.core.frame.DataFrame]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">conversion_mapping</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;temp&quot;</span><span class="p">:</span> <span class="s2">&quot;float&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;anno&quot;</span><span class="p">:</span> <span class="s2">&quot;int16&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;mes&quot;</span><span class="p">:</span> <span class="s2">&quot;int8&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;dia&quot;</span><span class="p">:</span> <span class="s2">&quot;int8&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;hora&quot;</span><span class="p">:</span> <span class="s2">&quot;int8&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;minuto&quot;</span><span class="p">:</span> <span class="s2">&quot;int8&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">conversion_mapping</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">df</span>
+
+    <span class="k">except</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No se pudo darle formato a los datos.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>        </div>
+
+
+
+<div class="viewcode-block" id="modificar_campos">
+<a class="viewcode-back" href="../prosecution.html#prosecution.modificar_campos">[documentos]</a>
+<span class="k">def</span> <span class="nf">modificar_campos</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">campos_nuevos</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Modifica ell nombre de las columnas del DataFrame.</span>
+
+<span class="sd">    :param df: Indica el data frame con los datos.</span>
+<span class="sd">    :param campos_nuevos: Lista los nombres nuevos de los campos.</span>
+
+<span class="sd">    :return: [Metadatos de la estación seleccionada]</span>
+<span class="sd">    :rtype: [pandas.core.frame.DataFrame]    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">campos_nuevos</span>
+        <span class="k">return</span> <span class="n">df</span>
+
+    <span class="k">except</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No se pudo modificar el nombre de los campos.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>        </div>
+
+
+
+<div class="viewcode-block" id="formato_metadatos">
+<a class="viewcode-back" href="../prosecution.html#prosecution.formato_metadatos">[documentos]</a>
+<span class="k">def</span> <span class="nf">formato_metadatos</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Modifica el tipo de dato de los Metadatos almacenados</span>
+<span class="sd">    en el archivo parquet alojado en el Data Lake.</span>
+<span class="sd">    Asigna el tipo de dato que mejor se ajusta, para</span>
+<span class="sd">    minimizar el espacio en memoria.</span>
+
+<span class="sd">    :param df: Indica el data frame con los datos.</span>
+
+<span class="sd">    :type [df]: [pandas.core.frame.DataFrame]</span>
+
+<span class="sd">    :return: [Metadatos de la estación seleccionada]</span>
+<span class="sd">    :rtype: [pandas.core.frame.DataFrame]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">conversion_mapping</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;icaoId&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;lat&quot;</span><span class="p">:</span> <span class="s2">&quot;float&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;lon&quot;</span><span class="p">:</span> <span class="s2">&quot;float&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;elev&quot;</span><span class="p">:</span> <span class="s2">&quot;int16&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;country&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span>
+        <span class="p">}</span>
+
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">conversion_mapping</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">df</span>
+
+    <span class="k">except</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No se pudo darle formato a los metadatos.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>        </div>
+
+
+
+<div class="viewcode-block" id="concatenacion">
+<a class="viewcode-back" href="../prosecution.html#prosecution.concatenacion">[documentos]</a>
+<span class="k">def</span> <span class="nf">concatenacion</span><span class="p">(</span><span class="n">df1</span><span class="p">,</span> <span class="n">df2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Realiza la concatenación de los DataFrames que tienen los</span>
+<span class="sd">    registros obtenidos con la extracción full y el obtenido con</span>
+<span class="sd">    la extracción incremental.</span>
+
+<span class="sd">    :param df1: Indica el DataFrame con los datos full.</span>
+<span class="sd">    :param df1: Indica el DataFrame con los datos incremental.</span>
+
+<span class="sd">    :type [df1]: [pandas.core.frame.DataFrame]</span>
+<span class="sd">    :type [df2]: [pandas.core.frame.DataFrame]</span>
+
+<span class="sd">    :return: [Datos de la estación seleccionada concatenados]</span>
+<span class="sd">    :rtype: [pandas.core.frame.DataFrame]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">df_concatenado</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">df1</span><span class="p">,</span> <span class="n">df2</span><span class="p">],</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">df_concatenado</span>
+    
+    <span class="k">except</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No se pudo realizar la concatenación.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>        </div>
+
+
+
+<div class="viewcode-block" id="maxima">
+<a class="viewcode-back" href="../prosecution.html#prosecution.maxima">[documentos]</a>
+<span class="k">def</span> <span class="nf">maxima</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calcula la temperatura máxima, guardando en un nuevo</span>
+<span class="sd">    DataFrame los valores con la fecha y hora en la que sucedió.</span>
+
+<span class="sd">    :param df: Indica el DataFrame con los datos full.</span>
+
+<span class="sd">    :type [df]: [pandas.core.frame.DataFrame]</span>
+
+<span class="sd">    :return: [DataDrame con los valores de temperatura máxima diaria]</span>
+<span class="sd">    :rtype: [pandas.core.frame.DataFrame]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+
+        <span class="c1"># Se define el DataFrame que resigtra la temperatura máxima</span>
+        <span class="n">df_maximas</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Máxima&#39;</span><span class="p">,</span> <span class="s1">&#39;Año&#39;</span><span class="p">,</span> <span class="s1">&#39;Mes&#39;</span><span class="p">,</span> <span class="s1">&#39;Día&#39;</span><span class="p">,</span> <span class="s1">&#39;Hora&#39;</span><span class="p">,</span> <span class="s1">&#39;Minuto&#39;</span><span class="p">])</span>
+
+        <span class="c1"># Se buscan la máxima en el DataFrame de temperaturas horarias</span>
+        <span class="n">t_max</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Temperatura&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+        
+        <span class="c1"># Se Ubica el número de registro para acceder a la fecha y hora</span>
+        <span class="n">indice_max_valor</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Temperatura&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">idxmax</span><span class="p">()</span>
+        
+        <span class="c1"># Se ubican los valores de fecha y hora para ese numero de registro de la maxima</span>
+        <span class="n">anno_max</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">indice_max_valor</span><span class="p">,</span> <span class="s1">&#39;Año&#39;</span><span class="p">]</span>
+        <span class="n">mes_max</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">indice_max_valor</span><span class="p">,</span> <span class="s1">&#39;Mes&#39;</span><span class="p">]</span>
+        <span class="n">dia_max</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">indice_max_valor</span><span class="p">,</span> <span class="s1">&#39;Día&#39;</span><span class="p">]</span>
+        <span class="n">hora_max</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">indice_max_valor</span><span class="p">,</span> <span class="s1">&#39;Hora&#39;</span><span class="p">]</span>
+        <span class="n">minuto_max</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">indice_max_valor</span><span class="p">,</span> <span class="s1">&#39;Minuto&#39;</span><span class="p">]</span>
+        
+        <span class="c1"># Se completa el nuevo DataFrame</span>
+        <span class="n">df_maximas</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dia_max</span><span class="p">,</span> <span class="s1">&#39;Máxima&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">t_max</span>
+        <span class="n">df_maximas</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dia_max</span><span class="p">,</span> <span class="s1">&#39;Año&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">anno_max</span>
+        <span class="n">df_maximas</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dia_max</span><span class="p">,</span> <span class="s1">&#39;Mes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mes_max</span>
+        <span class="n">df_maximas</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dia_max</span><span class="p">,</span> <span class="s1">&#39;Día&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dia_max</span>
+        <span class="n">df_maximas</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dia_max</span><span class="p">,</span> <span class="s1">&#39;Hora&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hora_max</span>
+        <span class="n">df_maximas</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dia_max</span><span class="p">,</span> <span class="s1">&#39;Minuto&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">minuto_max</span>
+
+        <span class="c1"># Se formatean los campos</span>
+        <span class="n">conversion_mapping</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;Máxima&quot;</span><span class="p">:</span> <span class="s2">&quot;float&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Año&quot;</span><span class="p">:</span> <span class="s2">&quot;int16&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Mes&quot;</span><span class="p">:</span> <span class="s2">&quot;int8&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Día&quot;</span><span class="p">:</span> <span class="s2">&quot;int8&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Hora&quot;</span><span class="p">:</span> <span class="s2">&quot;int8&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Minuto&quot;</span><span class="p">:</span> <span class="s2">&quot;int8&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="n">df_maximas</span> <span class="o">=</span> <span class="n">df_maximas</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">conversion_mapping</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">df_maximas</span>
+
+    <span class="k">except</span><span class="p">:</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No se pudo calcular y/o almacenar la máxima.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>        </div>
+
+
+
+<div class="viewcode-block" id="minima">
+<a class="viewcode-back" href="../prosecution.html#prosecution.minima">[documentos]</a>
+<span class="k">def</span> <span class="nf">minima</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calcula la temperatura mínima, guardando en un nuevo</span>
+<span class="sd">    DataFrame los valores con la fecha y hora en la que sucedió.</span>
+
+<span class="sd">    :param df: Indica el DataFrame con los datos full.</span>
+
+<span class="sd">    :type [df]: [pandas.core.frame.DataFrame]</span>
+
+<span class="sd">    :return: [DataDrame con los valores de temperatura máxima diaria]</span>
+<span class="sd">    :rtype: [pandas.core.frame.DataFrame]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+
+        <span class="c1"># Se define el DataFrame que resigtra la temperatura máxima</span>
+        <span class="n">df_minimas</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Mínima&#39;</span><span class="p">,</span> <span class="s1">&#39;Año&#39;</span><span class="p">,</span> <span class="s1">&#39;Mes&#39;</span><span class="p">,</span> <span class="s1">&#39;Día&#39;</span><span class="p">,</span> <span class="s1">&#39;Hora&#39;</span><span class="p">,</span> <span class="s1">&#39;Minuto&#39;</span><span class="p">])</span>
+
+        <span class="c1"># Se buscan la máxima en el DataFrame de temperaturas horarias</span>
+        <span class="n">t_min</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Temperatura&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        
+        <span class="c1"># Se Ubica el número de registro para acceder a la fecha y hora</span>
+        <span class="n">indice_min_valor</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Temperatura&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">idxmin</span><span class="p">()</span>
+        
+        <span class="c1"># Se ubican los valores de fecha y hora para ese numero de registro de la maxima</span>
+        <span class="n">anno_min</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">indice_min_valor</span><span class="p">,</span> <span class="s1">&#39;Año&#39;</span><span class="p">]</span>
+        <span class="n">mes_min</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">indice_min_valor</span><span class="p">,</span> <span class="s1">&#39;Mes&#39;</span><span class="p">]</span>
+        <span class="n">dia_min</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">indice_min_valor</span><span class="p">,</span> <span class="s1">&#39;Día&#39;</span><span class="p">]</span>
+        <span class="n">hora_min</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">indice_min_valor</span><span class="p">,</span> <span class="s1">&#39;Hora&#39;</span><span class="p">]</span>
+        <span class="n">minuto_min</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">indice_min_valor</span><span class="p">,</span> <span class="s1">&#39;Minuto&#39;</span><span class="p">]</span>
+        
+        <span class="c1"># Se completa el nuevo DataFrame</span>
+        <span class="n">df_minimas</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dia_min</span><span class="p">,</span> <span class="s1">&#39;Mínima&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">t_min</span>
+        <span class="n">df_minimas</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dia_min</span><span class="p">,</span> <span class="s1">&#39;Año&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">anno_min</span>
+        <span class="n">df_minimas</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dia_min</span><span class="p">,</span> <span class="s1">&#39;Mes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mes_min</span>
+        <span class="n">df_minimas</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dia_min</span><span class="p">,</span> <span class="s1">&#39;Día&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dia_min</span>
+        <span class="n">df_minimas</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dia_min</span><span class="p">,</span> <span class="s1">&#39;Hora&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hora_min</span>
+        <span class="n">df_minimas</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dia_min</span><span class="p">,</span> <span class="s1">&#39;Minuto&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">minuto_min</span>
+
+        <span class="c1"># Se formatean los campos</span>
+        <span class="n">conversion_mapping</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;Mínima&quot;</span><span class="p">:</span> <span class="s2">&quot;float&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Año&quot;</span><span class="p">:</span> <span class="s2">&quot;int16&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Mes&quot;</span><span class="p">:</span> <span class="s2">&quot;int8&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Día&quot;</span><span class="p">:</span> <span class="s2">&quot;int8&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Hora&quot;</span><span class="p">:</span> <span class="s2">&quot;int8&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Minuto&quot;</span><span class="p">:</span> <span class="s2">&quot;int8&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="n">df_minimas</span> <span class="o">=</span> <span class="n">df_minimas</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">conversion_mapping</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">df_minimas</span>
+
+    <span class="k">except</span><span class="p">:</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No se pudo calcular y/o almacenar la mínima.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>        </div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2024, Fabricio Lopretto.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

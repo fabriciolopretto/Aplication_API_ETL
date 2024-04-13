@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>prosecution module &mdash; documentación de Aplicacion_ETL - 0.0.2</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+      <link rel="stylesheet" href="_static/fonts.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=58349a41"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="_static/translations.js?v=efdbd0b9"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="genindex.html" />
+    <link rel="search" title="Búsqueda" href="search.html" />
+    <link rel="next" title="storage module" href="storage.html" />
+    <link rel="prev" title="main module" href="main.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Aplicacion_ETL
+          </a>
+              <div class="version">
+                0.0.1
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="extraction.html">extraction module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="main.html">main module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">prosecution module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#prosecution.concatenacion"><code class="docutils literal notranslate"><span class="pre">concatenacion()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#prosecution.duplicados"><code class="docutils literal notranslate"><span class="pre">duplicados()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#prosecution.elimnar_reportes_nulos"><code class="docutils literal notranslate"><span class="pre">elimnar_reportes_nulos()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#prosecution.formato_datos"><code class="docutils literal notranslate"><span class="pre">formato_datos()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#prosecution.formato_metadatos"><code class="docutils literal notranslate"><span class="pre">formato_metadatos()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#prosecution.imputacion_datos_nulos"><code class="docutils literal notranslate"><span class="pre">imputacion_datos_nulos()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#prosecution.imputacion_metadatos_nulos"><code class="docutils literal notranslate"><span class="pre">imputacion_metadatos_nulos()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#prosecution.maxima"><code class="docutils literal notranslate"><span class="pre">maxima()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#prosecution.minima"><code class="docutils literal notranslate"><span class="pre">minima()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#prosecution.modificar_campos"><code class="docutils literal notranslate"><span class="pre">modificar_campos()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#prosecution.separador_campo_time"><code class="docutils literal notranslate"><span class="pre">separador_campo_time()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="storage.html">storage module</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Aplicacion_ETL</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">prosecution module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/prosecution.rst.txt" rel="nofollow"> Ver código fuente de la página</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-prosecution">
+<span id="prosecution-module"></span><h1>prosecution module<a class="headerlink" href="#module-prosecution" title="Link to this heading"></a></h1>
+<p>Este módulo define a las funciones que realizan en el procesamiento
+los datos extraídos de la API. Las tareas realizadas son:
+1 - Elimina los registros duplicados.
+2 - Elimina registros de datos que no tienen fecha/hora resgitrada.
+3 - Completa con «NaN» los datos faltantes del campo indicado
+4 - Se para el campo de tiempo en año/mes/día/hora/minutos
+5 - Modifica el tipo de datos para optimizar en memoria.
+6 -</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="prosecution.concatenacion">
+<span class="sig-prename descclassname"><span class="pre">prosecution.</span></span><span class="sig-name descname"><span class="pre">concatenacion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/prosecution.html#concatenacion"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#prosecution.concatenacion" title="Link to this definition"></a></dt>
+<dd><p>Realiza la concatenación de los DataFrames que tienen los
+registros obtenidos con la extracción full y el obtenido con
+la extracción incremental.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df1</strong> – Indica el DataFrame con los datos full.</p></li>
+<li><p><strong>df1</strong> – Indica el DataFrame con los datos incremental.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>[Datos de la estación seleccionada concatenados]</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>[pandas.core.frame.DataFrame]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prosecution.duplicados">
+<span class="sig-prename descclassname"><span class="pre">prosecution.</span></span><span class="sig-name descname"><span class="pre">duplicados</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/prosecution.html#duplicados"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#prosecution.duplicados" title="Link to this definition"></a></dt>
+<dd><p>Elimina los registros duplicados en los datos almacenados
+en los archivos parquet alojados en la capa «Landing» del Data Lake.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>df</strong> – Indica el data frame con los datos.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>[Metadatos o Datos de la estación seleccionada]</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>[pandas.core.frame.DataFrame]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prosecution.elimnar_reportes_nulos">
+<span class="sig-prename descclassname"><span class="pre">prosecution.</span></span><span class="sig-name descname"><span class="pre">elimnar_reportes_nulos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">campo</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/prosecution.html#elimnar_reportes_nulos"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#prosecution.elimnar_reportes_nulos" title="Link to this definition"></a></dt>
+<dd><p>Elimina los registros sin identificador de fecha y hora en los datos
+almacenados en los archivos parquet, alojados en la capa «Landing»
+del Data Lake.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> – Indica el data frame con los datos.</p></li>
+<li><p><strong>campo</strong> – Indica el campo en el que se detectan faltantes.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>[Meta. o Datos de la estación seleccionada]</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>[pandas.core.frame.DataFrame]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prosecution.formato_datos">
+<span class="sig-prename descclassname"><span class="pre">prosecution.</span></span><span class="sig-name descname"><span class="pre">formato_datos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/prosecution.html#formato_datos"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#prosecution.formato_datos" title="Link to this definition"></a></dt>
+<dd><p>Modifica el tipo de dato de los Datos almacenados
+en los archivos parquet alojados en el Data Lake.
+Asigna el tipo de dato que mejor se ajusta, para
+minimizar el espacio en memoria.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>df</strong> – Indica el data frame con los datos.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>[Datos de la estación seleccionada]</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>[pandas.core.frame.DataFrame]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prosecution.formato_metadatos">
+<span class="sig-prename descclassname"><span class="pre">prosecution.</span></span><span class="sig-name descname"><span class="pre">formato_metadatos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/prosecution.html#formato_metadatos"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#prosecution.formato_metadatos" title="Link to this definition"></a></dt>
+<dd><p>Modifica el tipo de dato de los Metadatos almacenados
+en el archivo parquet alojado en el Data Lake.
+Asigna el tipo de dato que mejor se ajusta, para
+minimizar el espacio en memoria.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>df</strong> – Indica el data frame con los datos.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>[Metadatos de la estación seleccionada]</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>[pandas.core.frame.DataFrame]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prosecution.imputacion_datos_nulos">
+<span class="sig-prename descclassname"><span class="pre">prosecution.</span></span><span class="sig-name descname"><span class="pre">imputacion_datos_nulos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">campo</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/prosecution.html#imputacion_datos_nulos"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#prosecution.imputacion_datos_nulos" title="Link to this definition"></a></dt>
+<dd><p>Asigna a los registros almacenados en los archivos parquet (alojados
+en la capa «Landing» del Data Lake) con valores de temperatura nulos
+el valor por defecto «NaN» .</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> – Indica el data frame con los datos.</p></li>
+<li><p><strong>campo</strong> – Indica el campo (Temp.) en el que se detectan faltantes.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>[Datos de la estación seleccionada]</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>[pandas.core.frame.DataFrame]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prosecution.imputacion_metadatos_nulos">
+<span class="sig-prename descclassname"><span class="pre">prosecution.</span></span><span class="sig-name descname"><span class="pre">imputacion_metadatos_nulos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/prosecution.html#imputacion_metadatos_nulos"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#prosecution.imputacion_metadatos_nulos" title="Link to this definition"></a></dt>
+<dd><p>Asigna valores por defecto a los registros almacenados
+en el archivo parquet (alojados en la capa «Landing»
+del Data Lake).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>df</strong> – Indica el data frame con los datos.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>[Datos de la estación seleccionada]</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>[pandas.core.frame.DataFrame]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prosecution.maxima">
+<span class="sig-prename descclassname"><span class="pre">prosecution.</span></span><span class="sig-name descname"><span class="pre">maxima</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/prosecution.html#maxima"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#prosecution.maxima" title="Link to this definition"></a></dt>
+<dd><p>Calcula la temperatura máxima, guardando en un nuevo
+DataFrame los valores con la fecha y hora en la que sucedió.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>df</strong> – Indica el DataFrame con los datos full.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>[DataDrame con los valores de temperatura máxima diaria]</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>[pandas.core.frame.DataFrame]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prosecution.minima">
+<span class="sig-prename descclassname"><span class="pre">prosecution.</span></span><span class="sig-name descname"><span class="pre">minima</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/prosecution.html#minima"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#prosecution.minima" title="Link to this definition"></a></dt>
+<dd><p>Calcula la temperatura mínima, guardando en un nuevo
+DataFrame los valores con la fecha y hora en la que sucedió.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>df</strong> – Indica el DataFrame con los datos full.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>[DataDrame con los valores de temperatura máxima diaria]</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>[pandas.core.frame.DataFrame]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prosecution.modificar_campos">
+<span class="sig-prename descclassname"><span class="pre">prosecution.</span></span><span class="sig-name descname"><span class="pre">modificar_campos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">campos_nuevos</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/prosecution.html#modificar_campos"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#prosecution.modificar_campos" title="Link to this definition"></a></dt>
+<dd><p>Modifica ell nombre de las columnas del DataFrame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> – Indica el data frame con los datos.</p></li>
+<li><p><strong>campos_nuevos</strong> – Lista los nombres nuevos de los campos.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>[Metadatos de la estación seleccionada]</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>[pandas.core.frame.DataFrame]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="prosecution.separador_campo_time">
+<span class="sig-prename descclassname"><span class="pre">prosecution.</span></span><span class="sig-name descname"><span class="pre">separador_campo_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">campo</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/prosecution.html#separador_campo_time"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#prosecution.separador_campo_time" title="Link to this definition"></a></dt>
+<dd><p>A los valores de fecha/hora almacenados en los archivos parquet
+(alojados en la capa «Landing» del Data Lake) los separa en campos
+de: año, mes, día, hora y minutos. Además, elimina el campo original.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> – Indica el data frame con los datos.</p></li>
+<li><p><strong>campo</strong> – Indica el campo (Temp.) en el que se detectan faltantes.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>[Datos de la estación seleccionada]</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>[pandas.core.frame.DataFrame]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Pie de página">
+        <a href="main.html" class="btn btn-neutral float-left" title="main module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
+        <a href="storage.html" class="btn btn-neutral float-right" title="storage module" accesskey="n" rel="next">Siguiente <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2024, Fabricio Lopretto.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>extraction &mdash; documentación de Aplicacion_ETL - 0.0.2</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/fonts.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=58349a41"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../_static/translations.js?v=efdbd0b9"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Aplicacion_ETL
+          </a>
+              <div class="version">
+                0.0.1
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../extraction.html">extraction module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../main.html">main module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../prosecution.html">prosecution module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../storage.html">storage module</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Aplicacion_ETL</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Código de módulo</a></li>
+      <li class="breadcrumb-item active">extraction</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Código fuente para extraction</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Este módulo define a las funciones que extraen la metadata (extración full)</span>
+<span class="sd">y los mensajes metar (extracción full e incremental) de la estación</span>
+<span class="sd">meteorológica seleccioanda desde la API, a partir de los módulos</span>
+<span class="sd">correspondientes.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+
+
+<div class="viewcode-block" id="station_data">
+<a class="viewcode-back" href="../extraction.html#extraction.station_data">[documentos]</a>
+<span class="k">def</span> <span class="nf">station_data</span><span class="p">(</span><span class="n">base_url</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">,</span> <span class="n">aeropuerto</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Permite extraer la metadata de la estación seleccionada.</span>
+
+<span class="sd">    :param base_url: Indica la URL de la API.</span>
+<span class="sd">    :param endpoint: Indica el &quot;endpoint&quot; que se va a extraer de la API.</span>
+<span class="sd">    :param aeropuerto: Indica el código OACI del aeropuerto.</span>
+
+<span class="sd">    :var endpoint_url: Genera la dirección URL de fomra completa.</span>
+<span class="sd">    :var params: Contiene los parámetros para la API.</span>
+<span class="sd">    :var data: Contiene la información provista por la API.</span>
+
+<span class="sd">    :type [base_url]: [string]</span>
+<span class="sd">    :type [endpoint]: [string]</span>
+<span class="sd">    :type [aeropuerto]: [string]</span>
+<span class="sd">    :type [endpoint_url]: [string]</span>
+<span class="sd">    :type [params]: [dict]</span>
+<span class="sd">    :type [data]: [list]</span>
+
+<span class="sd">    :return: [Metadatos de la estación seleccionada]</span>
+<span class="sd">    :rtype: [pandas.core.frame.DataFrame]</span>
+
+<span class="sd">    Los parámetros de la API para este endpoint se pueden consultar en:</span>
+<span class="sd">    https://aviationweather.gov/data/api/#/Data/dataStationInfo</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">endpoint_url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base_url</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">endpoint</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;ids&quot;</span><span class="p">:</span> <span class="n">aeropuerto</span><span class="p">,</span>
+                <span class="s2">&quot;bbox&quot;</span><span class="p">:</span> <span class="s2">&quot;-20,-80,-60,-40&quot;</span><span class="p">,</span> <span class="c1"># latN,LonW,LatS,LonE</span>
+                <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;json&quot;</span><span class="p">}</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">endpoint_url</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+        <span class="c1"># Levanta una excepción si hay un error en la respuesta HTTP.</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>  
+
+        <span class="c1"># Verificar si los datos están en formato JSON.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+            <span class="n">df_station</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">json_normalize</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            
+            <span class="k">return</span> <span class="n">df_station</span><span class="p">[[</span><span class="s1">&#39;icaoId&#39;</span><span class="p">,</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span><span class="s1">&#39;lon&#39;</span><span class="p">,</span><span class="s1">&#39;elev&#39;</span><span class="p">,</span><span class="s1">&#39;country&#39;</span><span class="p">]]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;El formato de respuesta no es el esperado.&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>        
+
+    <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">RequestException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="c1"># Capturar cualquier error de solicitud, como errores HTTP.</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;La petición ha fallado. Código de error : </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="data_full">
+<a class="viewcode-back" href="../extraction.html#extraction.data_full">[documentos]</a>
+<span class="k">def</span> <span class="nf">data_full</span><span class="p">(</span><span class="n">base_url</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">,</span> <span class="n">aeropuerto</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Permite extraer de forma completa los datos de</span>
+<span class="sd">    temperatura [ºC] de la estación seleccionada.</span>
+
+<span class="sd">    :param base_url: Indica la URL de la API.</span>
+<span class="sd">    :param endpoint: Indica el &quot;endpoint&quot; que se va a extraer de la API.</span>
+<span class="sd">    :param aeropuerto: Indica el código OACI del aeropuerto.</span>
+
+<span class="sd">    :var last_date: Toma la fecha y hora actual en UTC.</span>
+<span class="sd">    :var horas: Cantidad de horas desde las 00UTC incluyendo a la misma.</span>
+<span class="sd">    :var endpoint_url: Genera la dirección URL de fomra completa.</span>
+<span class="sd">    :var params: Contiene los parámetros para la API.</span>
+<span class="sd">    :var data: Contiene la información provista por la API.</span>
+
+<span class="sd">    :type [base_url]: [string]</span>
+<span class="sd">    :type [endpoint]: [string]</span>
+<span class="sd">    :type [aeropuerto]: [string]</span>
+<span class="sd">    :type [endpoint_url]: [string]</span>
+<span class="sd">    :type [params]: [dict]</span>
+<span class="sd">    :type [data]: [list]</span>
+<span class="sd">    :type [last_date]: [string]</span>
+<span class="sd">    :type [horas]: [integer]</span>
+
+<span class="sd">    :return: [Datos de la estación seleccionada de 00Z a hora presente]</span>
+<span class="sd">    :rtype: [pandas.core.frame.DataFrame]</span>
+
+<span class="sd">    Los parámetros de la API para este endpoint se pueden consultar en:</span>
+<span class="sd">    https://aviationweather.gov/data/api/#/Data/dataMetars</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">last_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span> <span class="c1"># timedelta(hours=1)</span>
+    <span class="n">last_date</span> <span class="o">=</span> <span class="n">last_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:00:00Z&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Calcula la diferencia de horas entre la actual y el inicio del dia</span>
+    <span class="n">horas</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">last_date</span><span class="p">[</span><span class="mi">11</span><span class="p">:</span><span class="mi">13</span><span class="p">])</span><span class="o">+</span><span class="mi">1</span> <span class="c1"># &quot;+1&quot; Para incliur el dato de 00Z</span>
+    
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">endpoint_url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base_url</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">endpoint</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;ids&quot;</span><span class="p">:</span> <span class="s2">&quot;SAEZ&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;json&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;taf&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                <span class="s2">&quot;hours&quot;</span><span class="p">:</span> <span class="n">horas</span><span class="p">,</span>  <span class="c1"># Horas hacia a atrás a devolver</span>
+                <span class="s2">&quot;bbox&quot;</span><span class="p">:</span> <span class="s2">&quot;-20,-80,-60,-40&quot;</span><span class="p">,</span> <span class="c1"># latN,LonW,LatS,LonE</span>
+                <span class="s2">&quot;date&quot;</span><span class="p">:</span> <span class="n">last_date</span>  <span class="c1"># yyyy-mm-ddThh:mm:ssZ</span>
+                <span class="p">}</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">endpoint_url</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+        <span class="c1"># Levanta una excepción si hay un error en la respuesta HTTP.</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+
+        <span class="c1"># Verificar si los datos están en formato JSON.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+            <span class="n">df_metar_full</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">json_normalize</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            
+            <span class="k">return</span> <span class="n">df_metar_full</span><span class="p">[[</span><span class="s1">&#39;reportTime&#39;</span><span class="p">,</span><span class="s1">&#39;temp&#39;</span><span class="p">]][</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;El formato de respuesta no es el esperado.&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>        
+
+    <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">RequestException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="c1"># Capturar cualquier error de solicitud, como errores HTTP.</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;La petición ha fallado. Código de error : </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="data_incremental">
+<a class="viewcode-back" href="../extraction.html#extraction.data_incremental">[documentos]</a>
+<span class="k">def</span> <span class="nf">data_incremental</span><span class="p">(</span><span class="n">base_url</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">,</span> <span class="n">aeropuerto</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Permite extraer de forma incremental de forma horaria</span>
+<span class="sd">    los datos de temperatura [ºC] de la estación seleccionada.</span>
+
+<span class="sd">    :param base_url: Indica la URL de la API.</span>
+<span class="sd">    :param endpoint: Indica el &quot;endpoint&quot; que se va a extraer de la API.</span>
+<span class="sd">    :param aeropuerto: Indica el código OACI del aeropuerto.</span>
+
+<span class="sd">    :var last_date: Toma la fecha y hora actual en UTC.</span>
+<span class="sd">    :var endpoint_url: Genera la dirección URL de fomra completa.</span>
+<span class="sd">    :var params: Contiene los parámetros para la API.</span>
+<span class="sd">    :var data: Contiene la información provista por la API.</span>
+
+<span class="sd">    :type [base_url]: [string]</span>
+<span class="sd">    :type [endpoint]: [string]</span>
+<span class="sd">    :type [aeropuerto]: [string]</span>
+<span class="sd">    :type [endpoint_url]: [string]</span>
+<span class="sd">    :type [params]: [dict]</span>
+<span class="sd">    :type [data]: [list]</span>
+<span class="sd">    :type [last_date]: [string]</span>
+<span class="sd">    :type [horas]: [integer]</span>
+
+<span class="sd">    :return: [Datos de la estación seleccionada de 00Z a hora presente]</span>
+<span class="sd">    :rtype: [pandas.core.frame.DataFrame]</span>
+
+<span class="sd">    Los parámetros de la API para este endpoint se pueden consultar en:</span>
+<span class="sd">    https://aviationweather.gov/data/api/#/Data/dataMetars</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">last_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span>
+    <span class="n">last_date</span> <span class="o">=</span> <span class="n">last_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:00:00Z&quot;</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">endpoint_url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base_url</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">endpoint</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;ids&quot;</span><span class="p">:</span> <span class="s2">&quot;SAEZ&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;json&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;taf&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                <span class="s2">&quot;hours&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># Horas hacia a atrás a devolver</span>
+                <span class="s2">&quot;bbox&quot;</span><span class="p">:</span> <span class="s2">&quot;-20,-80,-60,-40&quot;</span><span class="p">,</span> <span class="c1"># latN,LonW,LatS,LonE</span>
+                <span class="s2">&quot;date&quot;</span><span class="p">:</span> <span class="n">last_date</span>  <span class="c1"># yyyy-mm-ddThh:mm:ssZ</span>
+                <span class="p">}</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">endpoint_url</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+        <span class="c1"># Levanta una excepción si hay un error en la respuesta HTTP.</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+
+        <span class="c1"># Verificar si los datos están en formato JSON.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+
+            <span class="n">df_metar_incremental</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">json_normalize</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">df_metar_incremental</span><span class="p">[[</span><span class="s1">&#39;reportTime&#39;</span><span class="p">,</span><span class="s1">&#39;temp&#39;</span><span class="p">]]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;El formato de respuesta no es el esperado.&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>        
+
+    <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">RequestException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="c1"># Capturar cualquier error de solicitud, como errores HTTP.</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;La petición ha fallado. Código de error : </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2024, Fabricio Lopretto.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
